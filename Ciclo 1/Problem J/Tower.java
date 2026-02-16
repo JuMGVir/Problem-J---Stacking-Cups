@@ -8,25 +8,42 @@
 
 import javax.swing.JOptionPane;
 import javax.swing.JFrame;
+import java.util.*;
+
+//Conversion 1cm = 10px
 public class Tower{
     private int width;
     private int maxHeight;
-    private boolean isOkay;
-    
-    public Tower(int width, int maxHeight){}
-    public void pushCup(int i){}
-    public void popCup(){}
-    public void removeCup(int i){}
-    public void pushLid(int i){}
-    public void popLid(){}
-    public void removeLid(int i){}
-    public void orderTower(){}
-    public void reverseTower(){}
-    public int height(){return 0;}
-    public int[] lidedCups(){return 0[0];}
-    public String[][] stackingItems(){}
-    public void makeVisible(){}
-    public void makeInvisible(){}
-    public void exit(){}
-    public boolean ok(){}
+    private boolean isVisible;
+    private List<Cup> cups;
+    /**
+     * Create Canvas with set width and height
+     */
+    public Tower(int width, int maxHeight){
+        this.width = width;
+        this.maxHeight = maxHeight;
+        this.makeVisible();
+    }
+    public void makeVisible(){
+        isVisible = true;
+        draw();
+    }
+    public void makeInvisible(){
+        erase();
+        isVisible = false;
+    }
+    public void draw(){
+        if(isVisible){
+            Canvas canvas = Canvas.getCanvas();
+            canvas.draw("Tower", "white",
+                new java.awt.Rectangle(0,0,this.width, this.maxHeight));
+        }
+    }
+    public void erase(){
+        if(isVisible){
+            Canvas canvas = Canvas.getCanvas();
+            canvas.erase("Tower"); 
+            
+        } 
+    }
 }
