@@ -1,0 +1,17 @@
+#BlueJ class context
+comment0.target=TowerContest
+comment1.params=
+comment1.target=TowerContest()
+comment1.text=\r\n\r\n\ Constructor\ for\ objects\ of\ class\ TowerContest\r\n\r\n
+comment2.params=n\ h
+comment2.target=java.lang.String\ solve(int,\ int)
+comment2.text=\r\n\r\n\ Generador\ de\ solucion\ del\ problema\r\n\r\n
+comment3.params=torre\ objetive\ index\ suma\ actual\ lista
+comment3.target=boolean\ search(java.util.List,\ int,\ int,\ int,\ java.util.List,\ java.util.List)
+comment3.text=\r\n\r\n\ Buscador\ de\ la\ combinacion\ adecueada\ para\ amontonar\ las\ copas.\r\n\r\n
+comment4.params=n\ h
+comment4.target=void\ simulate(int,\ int)
+comment4.text=\r\n\ name\:\ simulate\r\n\ use\:\ int\ n,\ int\ h\r\n\ ?\r\n\ return\:\r\n
+comment5.params=
+comment5.target=java.lang.String\ convertListSolutionToString()
+numComments=6

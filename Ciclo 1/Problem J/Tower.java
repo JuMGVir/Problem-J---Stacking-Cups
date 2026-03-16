@@ -1,67 +1,64 @@
+import java.util.*;
+import javax.swing.JOptionPane;
 
 /**
- * Write a description of class Tower here.
- *
- * @author (your name)
- * @version (a version number or a date)
+ * Graphic simulator for Problem J - Stacking Cups
+ * 
+ * @author Juan Garzon, Juan Rivera 
+ * @version 3.0
  */
 
-import javax.swing.JOptionPane;
-import javax.swing.JFrame;
-import java.util.*;
-
-//Conversion 1cm = 30px
-public class Tower{
+public class Tower
+{
+    //Conversion 1cm = 30px
     private int width;
     private int maxHeight;
     private boolean isVisible;
-    private boolean lastOperationSuccessful = true;
-    public List<Integer> cups = new ArrayList<>();
-    public List<Integer> lids = new ArrayList<>();
-    public List<String[]> items = new ArrayList<>();
-    private List<Cup> cupInstances = new ArrayList<>();
-    private List<Lid> lidInstances = new ArrayList<>();
-    private Canvas canvas;
+    private boolean lastOperationSuccessful;
     
+    private List<Item> items = new ArrayList<>();
+    private Canvas canvas;
     
     /**
      * name: Tower
-     * use int: width (width of the tower and canvas); int maxHeight (height of the tower and canvas 
-     * starts a new instance of the class and creates de canvas
+     * use int: width (width of the tower and canvas); int maxHeight (height of the tower and canvas)
+     * starts a new instance of the class and creates the canvas
      * returns nothing
      */
     public Tower(int width, int maxHeight){
         this.width = width;
         this.maxHeight = maxHeight;
         this.isVisible = false;
-        this.lastOperationSuccessful = true;
         this.canvas = Canvas.getCanvas(this.width, this.maxHeight);
         this.canvas.setVisible(false);
+        this.lastOperationSuccessful = true;
     }
     
-    // MANAGE CUPS
+    //Manage Cup
+    
     /**
      * name: pushCup
      * use int : i (given cup identifier)
      * adds a "cup" on the items list (with type "cup" and real size) and cups list (only size)
      * returns nothing
      */
-    public void pushCup(int i) {
-        if(cups.contains(i)){
-           this.lastOperationSuccessful = false;
-           if (this.isVisible){
-               JOptionPane.showMessageDialog(null, "La taza " + i + " ya existe.");
+    public void pushCup(int i){
+        //Checks if the cup alredy exists
+        for(Item cups: items){
+            if (cups instanceof Cup && cups.getNumber() == i){
+                JOptionPane.showMessageDialog(null, "La taza "+i+" ya existe.");
+                this.lastOperationSuccessful = false;
+                return;
             }
-            return;
         }
-        String color = getColorForNumber(i);
-        Cup newCup = new Cup(i, color);
-        this.cups.add(i);
-        this.cupInstances.add(newCup);
-        this.items.add(new String[]{"cup", String.valueOf(i)}); // String.ValueOF(i), vuelve i en un texto. porque tenemos una lista heterogenia
+        //Creates the new cup
+        Cup newCup = new Cup(i);
+        this.items.add(newCup);
+        if(this.isVisible){
+            reDrawAll();
+        }
         this.lastOperationSuccessful = true;
-        if (this.isVisible) {
-        redrawAll();}
+        return;
     }
     
     /**
@@ -70,170 +67,109 @@ public class Tower{
      * removes the last cup on cups and items lists
      * returns nothign
      */
-    public void popCup() {
-    if (cups.isEmpty()) {
-        lastOperationSuccessful = false;
+    public void popCup(){
+        //Checks if items is empty
+        if (items.isEmpty()){
+            JOptionPane.showMessageDialog(null, "No hay tazas para eliminar", "Error", JOptionPane.ERROR_MESSAGE);
+            this.lastOperationSuccessful = false;
+            return;
+        }
+        
+        //Search the last cup
+        for (int i = items.size() - 1; i>=0 ; i--){
+            if (items.get(i) instanceof Cup){
+                Cup removed = (Cup) items.get(i);
+                removed.makeInvisible();
+                items.remove(i);
+                break;
+            }
+        }
+        
+        if(this.isVisible){
+            reDrawAll();
+        }
+        this.lastOperationSuccessful = true;
         return;
     }
     
-    // Encontrar la última taza en items para saber su índice
-    for (int i = items.size() - 1; i >= 0; i--) {
-        if (items.get(i)[0].equals("cup")) {
-            // 1. Eliminar de lista de datos
-            items.remove(i);
-            break;
-        }
-    }
     
-    // 2. Eliminar de cups (el último elemento)
-    if (!cups.isEmpty()) {
-        cups.remove(cups.size() - 1);
-    }
-    
-    // 3. ELIMINAR LA INSTANCIA GRÁFICA
-    if (!cupInstances.isEmpty()) {
-        Cup removed = cupInstances.remove(cupInstances.size() - 1);
-        removed.makeInvisible(); // Ocultarla del canvas
-    }
-    
-    // 4. Redibujar si es visible
-    if (isVisible) {
-        redrawAll();
-    }
-    
-    lastOperationSuccessful = true;
-}
-    
-/**
+    /**
      * name: removeCup
      * use int : i (given cup identifier to remove)
      * removes the cup with given "id"
      * returns nothing
      */
-    public void removeCup(int i) {
-    int size = (2*i)-1;
-    int number = i; // El número de taza
-    
-    // Buscar el índice en cupInstances
-    int instanceIndex = -1;
-    for (int idx = 0; idx < cupInstances.size(); idx++) {
-        Cup cup = cupInstances.get(idx);
-        // Asumiendo que Cup tiene un método getNumber()
-        if (cup.getNumber() == number) {
-            instanceIndex = idx;
-            break;
+    public void removeCup(int i){
+        //Search the specific Cup
+        for (int j = 0; j<items.size(); j++){
+            if (items.get(j) instanceof Cup && items.get(j).getNumber() == i){
+                Cup removed = (Cup) items.get(j);
+                removed.makeInvisible();
+                items.remove(j);
+                break;
+            }   
         }
+        if (this.isVisible) {reDrawAll();}
+        this.lastOperationSuccessful = true;
+        return;
     }
     
-    // Buscar en items
-    int itemIndex = -1;
-    for (int idx = 0; idx < items.size(); idx++) {
-        String[] item = items.get(idx);
-        if (item[0].equals("cup") && Integer.parseInt(item[1]) == size) {
-            itemIndex = idx;
-            break;
-        }
-    }
     
-    // Eliminar de todas las listas
-    if (itemIndex != -1) items.remove(itemIndex);
-    cups.remove(Integer.valueOf(size));
-    
-    if (instanceIndex != -1) {
-        Cup removed = cupInstances.remove(instanceIndex);
-        removed.makeInvisible();
-    }
-    
-    if (isVisible) redrawAll();
-}
-/**pushLid
- * genera una tapa del tamaño correspondiente a una copa.
- */
-    public void pushLid(int i) {
-    if(lids.contains(i)){
-               this.lastOperationSuccessful = false;
-               if (this.isVisible){
-                   JOptionPane.showMessageDialog(null, "la tapa " + i + " ya existe.");
-                }
+    //Manage Lid
+    /**
+     * name: pushLid
+     * use int : i (given lid identifier)
+     * adds a Lid to items and LidInstances
+     * returns nothing
+     */
+    public void pushLid(int i){
+        //Checks if the cup alredy exists
+        for(Item lids: items){
+            if (lids instanceof Lid && lids.getNumber() == i){
+                JOptionPane.showMessageDialog(null, "La taza "+i+" ya existe.");
+                this.lastOperationSuccessful = false;
                 return;
             }
-    String color = "black";
-    if (cups.contains(i)) {
-        for (Cup c : cupInstances) {
-            if (c.getSize() == i) {
-                color = c.getColor();
-                break;
-            }
         }
+        
+        //Creates the new lid
+        Lid newLid = new Lid(i);
+        this.items.add(newLid);
+        if(this.isVisible){
+            reDrawAll();
+        }
+        this.lastOperationSuccessful = true;
+        return;
     }
-    else{
-        color = getColorForNumber(i);
-    }
-    Lid newLid = new Lid(i, color);
-    this.lids.add(i);
-    this.lidInstances.add(newLid);
-    this.items.add(new String[]{"lid", String.valueOf(i)});
-    this.lastOperationSuccessful = true;
-    if (this.isVisible) {
-                redrawAll();
-            }
-}
-        /**
+    
+    /**
      * name: popLid
      * use nothing
      * Removes the last lid on lids and items lists
      * returns nothing
      */
-    public void popLid() {
-        // Verificar si hay tapas para eliminar
-        if (lids.isEmpty()) {
-            lastOperationSuccessful = false;
-            if (isVisible) {
-                JOptionPane.showMessageDialog(null, "No hay tapas para eliminar","Error", JOptionPane.ERROR_MESSAGE);
-            }
+    public void popLid(){
+        //Checks if items is empty
+        if (items.isEmpty()){
+            JOptionPane.showMessageDialog(null, "No hay tazas para eliminar", "Error", JOptionPane.ERROR_MESSAGE);
+            this.lastOperationSuccessful = false;
             return;
         }
         
-        // 1. Encontrar y eliminar la última tapa de items
-        int lastLidIndex = -1;
-        for (int i = items.size() - 1; i >= 0; i--) {
-            if (items.get(i)[0].equals("lid")) {
-                lastLidIndex = i;
+        //Search the last lid
+        for (int i = items.size() - 1; i>=0 ; i--){
+            if (items.get(i) instanceof Lid){
+                Lid removed = (Lid) items.get(i);
+                removed.makeInvisible();
+                items.remove(i);
                 break;
             }
         }
-        
-        if (lastLidIndex != -1) {
-            String[] removedItem = items.remove(lastLidIndex);
-            int size = Integer.parseInt(removedItem[1]);
-            int number = (size + 1) / 2;
-            
-            // 2. Eliminar de lids list
-            if (!lids.isEmpty()) {
-                lids.remove(lids.size() - 1);
-            }
-            
-            // 3. ELIMINAR LA INSTANCIA GRÁFICA correspondiente
-            Lid lidToRemove = findLidByNumber(number);
-            if (lidToRemove != null) {
-                lidToRemove.makeInvisible();
-                lidInstances.remove(lidToRemove);
-            }
-            
-            System.out.println("Tapa #" + number + " eliminada");
-        }
-        
-        // 4. Redibujar si es visible
-        if (isVisible) {
-            redrawAll();
-        }
-        
-        lastOperationSuccessful = true;
-        
-        // Debug
-        System.out.println("popLid completado. Tapas restantes: " + lids.size());
+        if(this.isVisible){reDrawAll();}
+        this.lastOperationSuccessful = true;
+        return;
     }
-        
+    
     /**
      * name: removeLid
      * use int : i (given lid identifier to remove)
@@ -241,161 +177,82 @@ public class Tower{
      * returns nothing
      */
     public void removeLid(int i){
-        int size = (2*i)-1;
-        if (!lids.isEmpty()){lids.remove(Integer.valueOf(size));}
-        
-        if (!items.isEmpty()){
-            for (int j = items.size()-1; i>=0; i--){
-                if (items.get(j)[0].equals("lid") && items.get(j)[1].equals(Integer.toString(size))){
-                    items.remove(j);
-                    break;
-                }
-            }
+        //Checks if items is empty
+        if (items.isEmpty()){
+            JOptionPane.showMessageDialog(null, "No hay tazas para eliminar", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
-        // pruebas
-        items.forEach(item -> System.out.println("Tipo: " + item[0] + ", Tamaño: " + item[1]));
-        System.out.println("Lista lids"+lids);
+        
+        //Search the specific Lid
+        for (int j = 0; j<items.size(); j++){
+            if (items.get(j) instanceof Lid && items.get(j).getNumber() == i){
+                Lid removed = (Lid) items.get(j);
+                removed.makeInvisible();
+                items.remove(j);
+                break;
+            }   
+        }
+        if (this.isVisible) {reDrawAll();}
         return;
     }
     
-    //REORGANIZE TOWER
+    //Reorganize Tower
     /**
- * name: orderTower
- * use nothing
- * Order tower from largest to smallest (mayor a menor)
- * returns nothing
- */
-public void orderTower() {
-    // 1. Ordenar las listas de datos
-    Collections.sort(cups, Collections.reverseOrder()); // Tazas de mayor a menor
-    Collections.sort(lids, Collections.reverseOrder()); // Tapas de mayor a menor
-    
-    // 2. Ordenar items con la lógica correcta:
-    // - De mayor a menor tamaño
-    // - Si misma tamaño, las tazas van antes que las tapas
-    items.sort((a, b) -> {
-        int sizeA = Integer.parseInt(a[1]);
-        int sizeB = Integer.parseInt(b[1]);
-        String typeA = a[0];
-        String typeB = b[0];
+     * name: orderTower
+     * use nothing
+     * Order tower from largest to smallest (mayor a menor)
+     * returns nothing
+     */
+    public void orderTower() {
+        //Ordenar items (mezcla de Cups y Lids)
         
-        // Primero por tamaño DESCENDENTE (mayor a menor)
-        if (sizeA != sizeB) {
-            return Integer.compare(sizeB, sizeA); // Mayor primero
+        items.sort((a, b) ->{
+            // Primero por number DESCENDENTE
+            int cmpNumber = Integer.compare(b.getNumber(), a.getNumber());
+            if (cmpNumber != 0) return cmpNumber;
+    
+            // Si mismo number, Cups van antes que Lids
+            if (a instanceof Cup && b instanceof Lid) return -1;
+            if (a instanceof Lid && b instanceof Cup) return 1;
+    
+            return 0; // mismo tipo y mismo number
+        });
+        
+        //Redibujar si es visible
+        if (isVisible) {
+            reDrawAll();
         }
-        
-        // Mismo tamaño: tazas van antes que tapas
-        if (typeA.equals(typeB)) return 0;
-        if (typeA.equals("cup")) return -1; // cup antes
-        return 1; // lid después
-    });
-    
-    // 3. REORDENAR LAS INSTANCIAS GRÁFICAS para que coincidan con el nuevo orden
-    reorderInstances();
-    
-    // 4. Redibujar si es visible
-    if (isVisible) {
-        redrawAll();
+        return;
     }
     
-    // 5. Mostrar resultado
-    System.out.println("=== TORRE ORDENADA (mayor a menor) ===");
-    items.forEach(item -> 
-        System.out.println("  " + item[0] + " tamaño " + item[1]));
+    /**
+     * name: reverseTower
+     * use nothing
+     * Order tower from smallest to largest (menor a mayor)
+     * returns nothing
+     */
+    public void reverseTower() {
+        //Ordenar items (mezcla de Cups y Lids)
+        items.sort((a, b) -> {
+            // Primero por number ASCENDENTE
+            int cmpNumber = Integer.compare(a.getNumber(), b.getNumber());
+            if (cmpNumber != 0) return cmpNumber;
     
-    lastOperationSuccessful = true;
-}
-
-/**
- * name: reverseTower
- * use nothing
- * Order tower from smallest to largest (menor a mayor)
- * returns nothing
- */
-public void reverseTower() {
-    // 1. Ordenar las listas de datos
-    Collections.sort(cups); // Tazas de menor a mayor
-    Collections.sort(lids); // Tapas de menor a mayor
+            // Si mismo number, Cups van antes que Lids
+            if (a instanceof Cup && b instanceof Lid) return -1;
+            if (a instanceof Lid && b instanceof Cup) return 1;
     
-    // 2. Ordenar items con la lógica correcta:
-    // - De menor a mayor tamaño
-    // - Si misma tamaño, las tazas van antes que las tapas
-    items.sort((a, b) -> {
-        int sizeA = Integer.parseInt(a[1]);
-        int sizeB = Integer.parseInt(b[1]);
-        String typeA = a[0];
-        String typeB = b[0];
+            return 0; // mismo tipo y mismo number
+        });
         
-        // Primero por tamaño ASCENDENTE (menor a mayor)
-        if (sizeA != sizeB) {
-            return Integer.compare(sizeA, sizeB); // Menor primero
+        //Redibujar si es visible
+        if (isVisible) {
+            reDrawAll();
         }
-        
-        // Mismo tamaño: tazas van antes que tapas
-        if (typeA.equals(typeB)) return 0;
-        if (typeA.equals("cup")) return -1; // cup antes
-        return 1; // lid después
-    });
-    
-    // 3. REORDENAR LAS INSTANCIAS GRÁFICAS para que coincidan con el nuevo orden
-    reorderInstances();
-    
-    // 4. Redibujar si es visible
-    if (isVisible) {
-        redrawAll();
+        return;
     }
     
-    // 5. Mostrar resultado
-    System.out.println("=== TORRE INVERSA (menor a mayor) ===");
-    items.forEach(item -> 
-        System.out.println("  " + item[0] + " tamaño " + item[1]));
-    
-    lastOperationSuccessful = true;
-}
-
-/**
- * name: reorderInstances
- * use nothing
- * Reordena las listas de instancias gráficas para que coincidan con el orden de items
- * Esto es crucial para que al redibujar, cada elemento tenga su instancia correcta
- */
-private void reorderInstances() {
-    // Crear nuevas listas temporales
-    List<Cup> newCupInstances = new ArrayList<>();
-    List<Lid> newLidInstances = new ArrayList<>();
-    
-    // Recorrer items en el NUEVO orden y agregar las instancias correspondientes
-    for (String[] item : items) {
-        String type = item[0];
-        int size = Integer.parseInt(item[1]);
-        int number = (size + 1) / 2;
-        
-        if (type.equals("cup")) {
-            Cup cup = findCupByNumber(number);
-            if (cup != null) {
-                newCupInstances.add(cup);
-            } else {
-                System.err.println("Error: Cup #" + number + " no encontrada al reordenar");
-            }
-        } else { // lid
-            Lid lid = findLidByNumber(number);
-            if (lid != null) {
-                newLidInstances.add(lid);
-            } else {
-                System.err.println("Error: Lid #" + number + " no encontrada al reordenar");
-            }
-        }
-    }
-    
-    // Reemplazar las listas antiguas con las nuevas (ordenadas)
-    cupInstances = newCupInstances;
-    lidInstances = newLidInstances;
-    
-    System.out.println("Instancias reordenadas: " + cupInstances.size() + 
-                       " tazas, " + lidInstances.size() + " tapas");
-}
-    
-    //CONSULT INFORMATION
+    //Consult Information
     /**
      * name: height
      * use nothing
@@ -403,197 +260,305 @@ private void reorderInstances() {
      * returns the total height of the tower
      */
     public int height() {
-    if (items.isEmpty()) return 0;
-    
-    int totalHeight = 0;
-    int currentTopLevel = 0; // Nivel actual de la superficie superior
-    
-    for (int i = 0; i < items.size(); i++) {
-        String[] item = items.get(i);
-        String type = item[0];
-        int size = Integer.parseInt(item[1]); // size = 2i-1
-        
-        if (type.equals("cup")) {
-            if (i == 0) {
-                // Primera taza en la base
-                totalHeight = size;
-                currentTopLevel = size;
-                System.out.println("Taza base #" + ((size+1)/2) + " - Altura: " + size);
-            } else {
-                // Verificar el elemento anterior para saber si la taza se apoya o se anida
-                String[] prevItem = items.get(i-1);
-                String prevType = prevItem[0];
-                int prevSize = Integer.parseInt(prevItem[1]);
-                
-                if (prevType.equals("cup")) {
-                    if (size < prevSize) {
-                        // Taza más pequeña se anida dentro de la anterior
-                        // No afecta la altura total
-                        System.out.println("  Taza #" + ((size+1)/2) + " se anida - no suma altura");
-                    } else {
-                        // Taza más grande: se apoya en el borde de la anterior
-                        totalHeight += (size - prevSize);
-                        currentTopLevel = totalHeight;
-                        System.out.println("  Taza #" + ((size+1)/2) + " más grande +" + (size-prevSize));
+        if (items.isEmpty()) return 0;
+
+        int totalHeight = 0;
+        int currentTopLevel = 0;
+
+        for(int i = 0; i < items.size(); i++){
+            Item item = items.get(i);
+            int size = item.getSize();
+            if (item instanceof Cup){
+                if (i == 0)
+                {
+                    //Primera taza en la base
+                    totalHeight = size;
+                    currentTopLevel = size;
+                }
+                else
+                {
+                    Item prevItem = items.get(i-1);
+                    int prevSize = prevItem.getSize();
+                    if (prevItem instanceof Cup)
+                    {
+                        if(size < prevSize){
+                            //Taza mas pequeña se anida dentor de la anterior, No afecta la altura total
+                        }else{
+                            totalHeight += (size-prevSize);
+                            currentTopLevel = totalHeight;
+                        }
+                    }else{
+                        if(size > prevSize){
+                            totalHeight += (size-1);
+                            currentTopLevel = totalHeight;
+                        }
+                        else{
+                            //Taza mas pequeña o igual que la tapa se anida
+                        }
                     }
-                } else { // prevType es "lid"
-                    // Si el anterior es tapa, verificar si la tapa es del mismo tamaño
-                    if (size > prevSize) {
-                        // Taza más grande que la tapa anterior
-                        totalHeight += (size - 1); // La tapa ya aportó 1cm
-                        currentTopLevel = totalHeight;
-                        System.out.println("  Taza #" + ((size+1)/2) + " sobre tapa +" + (size-1));
-                    } else {
-                        // Taza más pequeña o igual que la tapa - se anida
-                        System.out.println("  Taza #" + ((size+1)/2) + " se anida bajo tapa - no suma");
+                }
+
+            }else{
+                if(i==0){
+                    totalHeight = 1;
+                    currentTopLevel = 1;
+                }else{
+                    Item prevItem = items.get(i-1);
+                    int prevSize = prevItem.getSize();
+
+                    if(prevItem instanceof Cup){
+                        if(size == prevSize){
+                            totalHeight += 1;
+                            currentTopLevel = totalHeight;
+                        }else if (size<prevSize){
+                            //Taza mas pequeña - se anida dentro de la taza
+                        }else{
+                            totalHeight +=1;
+                            currentTopLevel = totalHeight;
+                        }
+                    }else{
+                        if(size <= prevSize){
+                            //tapa igual o mas pequeña - se anida
+                        }else{
+                            totalHeight += 1;
+                            currentTopLevel = totalHeight;
+                        }
                     }
                 }
             }
-        } else { // lid
-            // Verificar dónde se coloca la tapa
-            if (i == 0) {
-                // Primera tapa en la base (caso raro pero posible)
-                totalHeight = 1;
-                currentTopLevel = 1;
-                System.out.println("Tapa base #" + ((size+1)/2) + " - Altura: 1");
-            } else {
-                String[] prevItem = items.get(i-1);
-                String prevType = prevItem[0];
-                int prevSize = Integer.parseInt(prevItem[1]);
-                
-                if (prevType.equals("cup")) {
-                    if (size == prevSize) {
-                        // Tapa del mismo tamaño que la taza - CIERRA la taza
-                        totalHeight += 1;
-                        currentTopLevel = totalHeight;
-                        System.out.println("  Tapa #" + ((size+1)/2) + " cierra taza +1");
-                    } else if (size < prevSize) {
-                        // Tapa más pequeña - se anida dentro de la taza
-                        System.out.println("  Tapa #" + ((size+1)/2) + " se anida - no suma");
-                    } else {
-                        // Tapa más grande (no debería pasar, pero por si acaso)
-                        totalHeight += 1;
-                        currentTopLevel = totalHeight;
-                        System.out.println("  Tapa #" + ((size+1)/2) + " más grande +1");
-                    }
-                } else { // prevType es "lid"
-                    // Tapa sobre otra tapa
-                    if (size <= prevSize) {
-                        // Tapa igual o más pequeña - se anida
-                        System.out.println("  Tapa #" + ((size+1)/2) + " se anida sobre tapa - no suma");
-                    } else {
-                        // Tapa más grande
-                        totalHeight += 1;
-                        currentTopLevel = totalHeight;
-                        System.out.println("  Tapa #" + ((size+1)/2) + " más grande +1");
-                    }
-                }
-            }
+
         }
+        return totalHeight;
     }
     
-    System.out.println("Altura final: " + totalHeight + "cm");
-    return totalHeight;
-}
-    
     /**
-     * 
+     * name: lidedcups
+     * use: nothing
+     * The numbers of "closed" cups.
+     * returns lidedCupslist 
      */
     public int[] lidedCups() {
-    List<Integer> lidedCupsList = new ArrayList<>();
-    
-    for (int i = 0; i < items.size() - 1; i++) {
-        String[] current = items.get(i);
-        String[] next = items.get(i + 1);
-        
-        // Verificar si hay una taza seguida de su tapa
-        if (current[0].equals("cup") && next[0].equals("lid")) {
-            int cupSize = Integer.parseInt(current[1]);
-            int lidSize = Integer.parseInt(next[1]);
-            int cupNumber = (cupSize + 1) / 2; // Convertir tamaño a número
-            int lidNumber = (lidSize + 1) / 2;
-            
-            // Si son del mismo número y están juntos
-            if (cupNumber == lidNumber && cupSize == lidSize) {
-                lidedCupsList.add(cupNumber);
-            }
+        if(items.isEmpty()){
+            return null;
         }
+        List<Integer> lidedCupsList = new ArrayList<>();
+        int idx1 = 0;
+        int idx2 = 0;
+        int currentBig = 0;
+        while (idx1 < items.size()){
+            if(items.get(idx1) instanceof Cup){
+                idx2 = idx1+1;
+                while (idx2<items.size() && currentBig < items.get(idx1).getNumber()){
+                    if(items.get(idx2).getNumber() == items.get(idx1).getNumber() && items.get(idx2) instanceof Lid){
+                        lidedCupsList.add(items.get(idx2).getNumber());
+                        System.out.println("entra");
+                        break;
+                    }
+                    else{
+                        currentBig = items.get(idx2).getNumber();
+                        idx2+=1;
+                    }
+                    System.out.println("idx2: " + idx2);
+                }
+            }
+            idx1+=1;
+        }
+        Collections.sort(lidedCupsList);
+
+        int[] result = new int[lidedCupsList.size()];
+        for (int i = 0; i < lidedCupsList.size(); i++){
+            result[i] = lidedCupsList.get(i);
+        }
+        return result;
     }
-    
-    // Ordenar de menor a mayor como pide el requisito
-    Collections.sort(lidedCupsList);
-    
-    // Convertir a int[]
-    int[] result = new int[lidedCupsList.size()];
-    for (int i = 0; i < lidedCupsList.size(); i++) {
-        result[i] = lidedCupsList.get(i);
-    }
-    
-    return result;
-}
     
     /**
-     * 
+     * name: stackingItems
+     * use: nothing
+     * Shows the items from bottom to top.
+     * returns String[][]
      */
-    public String[][] stackingItems() {
-    String[][] result = new String[items.size()][2];
-    
-    for (int i = 0; i < items.size(); i++) {
-        String[] item = items.get(i);
-        // Convertir a minúsculas como pide el requisito
-        result[i][0] = item[0].toLowerCase();
-        result[i][1] = item[1];
+    public String[][] stackingItems(){
+        String[][] result = new String[items.size()][2];
+        for(int i = 0; i < items.size(); i++){
+            if(items.get(i) instanceof Cup){
+                result[i][0] = "cup";
+                result[i][1] = Integer.toString(items.get(i).getNumber());
+            }
+            else{
+                result[i][0] = "lid";
+                result[i][1] = Integer.toString(items.get(i).getNumber());
+            }
+            
+        }
+        return result;
     }
     
-    return result;
-}
+    //set Visibility
+    public void makeVisible() {
+        // Calcular altura actual de la torre
+        int towerHeight = height();
+        // Verificar si cabe en el canvas
+        if (towerHeight*30 <= maxHeight) {
+            isVisible = true;
+            // Redibujar todo
+            reDrawAll();  
+        } 
+    }
     
-    // SET VISIBILITY
-
-   /**
- * name: redrawAll
- * use nothing
- * Redibuja todos los elementos con el orden correcto:
- * 1. Tazas más grandes (atrás)
- * 2. Tazas más pequeñas (adelante)
- * 3. Tapas (siempre adelante)
- */
-private void redrawAll() {
-    if (!isVisible) return;
-    clearCanvas();
-    int centerX = width / 2;
-    int[] yPositions = calculateAllYPositions();
-    
-    // Crear lista de índices ordenados por tamaño de taza (MAYOR a MENOR)
-    //List<Integer> cupIndices = new ArrayList<>();
-    for (int i = 0; i < items.size(); i++) {
-        if (items.get(i)[0].equals("cup")) {
-            int idABuscar = Integer.parseInt(items.get(i)[1]);
-            Cup cup = findCupByNumber(idABuscar);
-            if (cup != null) {
-                cup.setPosition(centerX, yPositions[i]);
-                cup.makeVisible();
+    /**
+     * name: makeInvisible
+     * use nothing
+     * Hace invisible el simulador y oculta todos los elementos
+     * returns nothing
+     */
+    public void makeInvisible() {
+        if (isVisible) {
+            // Ocultar todos los elementos gráficos
+            for(Item item: items){
+                item.makeInvisible();
             }
+            // Limpiar el canvas
+            Canvas canvas = Canvas.getCanvas(this.width, this.maxHeight);
+            canvas.erase(this);
+            
+            // Actualizar estado
+            this.isVisible = false;
+            
+            // Mensaje de confirmación
+            JOptionPane.showMessageDialog(null, 
+                "🔍 Simulador ocultado\n" +
+                "Los datos de la torre se mantienen",
+                "Simulador",
+                JOptionPane.INFORMATION_MESSAGE);
+            
+            System.out.println("makeInvisible: Simulador ocultado");
+            
         }
-    }    
-    // DIBUJAR TAPAS (siempre adelante)
-    System.out.println("\n=== DIBUJANDO TAPAS (adelante) ===");
-    for (int i = 0; i < items.size(); i++) {
-        if (items.get(i)[0].equals("lid")) {
-                    int idABuscar = Integer.parseInt(items.get(i)[1]);
-                    Lid lid = findLidByNumber(idABuscar);
-                    
-                    if (lid != null) {
-                        lid.setPosition(centerX, yPositions[i]);
-                        lid.makeVisible();
+    }
+    
+    /**
+     * name: redrawAll
+     * use nothing
+     * Draw method
+     */
+    private void reDrawAll() {
+        if(!isVisible){return;}
+
+        clearCanvas();
+        int centerX = width /2;
+        int[] yPositions = calculateAllYPositions();
+
+        //Dibujar
+        for (int i = 0; i < items.size(); i++){
+            Item item = items.get(i);
+            item.setPosition(centerX, yPositions[i]);
+            item.makeVisible();
+        }
+
+        drawHeightRuler();
+        return;
+    }
+    
+    /**
+     * name: calculateAllYPositions
+     * use nothing
+     * Calcula la posición Y para cada elemento (borde superior)
+     */
+    private int[] calculateAllYPositions() {
+        if (items.isEmpty()) {
+            return new int[0];
+        }
+    
+        int[] yPositions = new int[items.size()];
+        int rulerMargin = 10; // Margen de la regla
+        int baseY = maxHeight - 120 - rulerMargin; // Ajuste por el margen
+        
+        // Primero calculamos las alturas acumuladas como en height()
+        int[] accumulatedHeights = new int[items.size()];
+        
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i);
+            int size = item.getSize();
+            
+            if (i == 0) {
+                // Primer elemento en la base
+                accumulatedHeights[i] = (item instanceof Cup) ? size : 1;
+            } else {
+                Item prevItem = items.get(i - 1);
+                int prevSize = prevItem.getSize();
+                int prevAccHeight = accumulatedHeights[i - 1];
+                
+                if (item instanceof Cup) {
+                    if (prevItem instanceof Cup) {
+                        if (size < prevSize) {
+                            // Taza más pequeña se anida dentro de la anterior
+                            // No afecta la altura acumulada
+                            accumulatedHeights[i] = prevAccHeight;
+                        } else {
+                            // Taza más grande, añade la diferencia
+                            accumulatedHeights[i] = prevAccHeight + (size - prevSize);
+                        }
+                    } else { // prevItem es Lid
+                        if (size > prevSize) {
+                            accumulatedHeights[i] = prevAccHeight + (size - 1);
+                        } else {
+                            // Taza más pequeña o igual que la tapa se anida
+                            accumulatedHeights[i] = prevAccHeight;
+                        }
+                    }
+                } else { // item es Lid
+                    if (prevItem instanceof Cup) {
+                        if (size == prevSize) {
+                            // Tapa del mismo tamaño que la taza, va encima
+                            accumulatedHeights[i] = prevAccHeight + 1;
+                        } else if (size < prevSize) {
+                            // Tapa más pequeña - se anida dentro de la taza
+                            accumulatedHeights[i] = prevAccHeight;
+                        } else {
+                            // Tapa más grande - va encima
+                            accumulatedHeights[i] = prevAccHeight + 1;
+                        }
+                    } else { // prevItem es Lid
+                        if (size <= prevSize) {
+                            // Tapa igual o más pequeña - se anida
+                            accumulatedHeights[i] = prevAccHeight;
+                        } else {
+                            // Tapa más grande - va encima
+                            accumulatedHeights[i] = prevAccHeight + 1;
+                        }
                     }
                 }
+            }
+        }
+        
+        // Encontrar la altura máxima acumulada para centrar verticalmente
+        int maxAccumulatedHeight = 0;
+        for (int h : accumulatedHeights) {
+            maxAccumulatedHeight = Math.max(maxAccumulatedHeight, h);
+        }
+        
+        // Ajustar baseY para centrar la torre verticalmente
+        // La torre completa ocupará maxAccumulatedHeight * 30 píxeles
+        int towerHeightPixels = maxAccumulatedHeight * 30;
+        baseY = baseY - (towerHeightPixels / 2); // Centrar verticalmente
+        
+        // Ahora convertimos alturas acumuladas a posiciones Y
+        for (int i = 0; i < items.size(); i++) {
+            Item item = items.get(i);
+            int size = item.getSize();
+            int accumulatedHeight = accumulatedHeights[i];
+            
+            // La posición Y del fondo del elemento
+            int bottomY = baseY - (accumulatedHeight * 30);
+            
+            // Para dibujar, queremos la posición Y de la PARTE SUPERIOR del elemento
+            yPositions[i] = bottomY - (size * 30);
+        }
+        
+        return yPositions;
     }
-    
-    drawHeightRuler();
-}
-    
-    
+        
     /**
      * name: clearCanvas
      * use nothing
@@ -602,404 +567,283 @@ private void redrawAll() {
      */
     private void clearCanvas() {
         // Ocultar todas las tazas
-        for (Cup cup : cupInstances) {
-            cup.makeInvisible();
-        }
-        
-        // Ocultar todas las tapas
-        for (Lid lid : lidInstances) {
-            lid.makeInvisible();
+        for (Item item :items){
+            item.makeInvisible();
         }
         
         // Limpiar el canvas completamente
         Canvas canvas = Canvas.getCanvas(this.width, this.maxHeight);
         canvas.erase(this); // Esto limpia todo el canvas
-        
-        System.out.println("Canvas limpiado - " + cupInstances.size() + 
-                           " tazas y " + lidInstances.size() + " tapas ocultadas");
     }
     
     /**
- * name: calculateAllYPositions
- * use nothing
- * Calcula la posición Y para cada elemento (borde superior)
- * AHORA CON LA LÓGICA CORRECTA DE ANIDAMIENTO
- */
-private int[] calculateAllYPositions() {
-    if (items.isEmpty()) {
-        return new int[0];
-    }
-    
-    int[] yPositions = new int[items.size()];
-    int baseY = maxHeight - 120; // Margen inferior
-    
-    // Primero, identificar todas las tazas y su jerarquía
-    List<Integer> cupIndices = new ArrayList<>();
-    for (int i = 0; i < items.size(); i++) {
-        if (items.get(i)[0].equals("cup")) {
-            cupIndices.add(i);
-        }
-    }
-    
-    // Calcular posiciones de tazas de la BASE hacia arriba
-    int currentBaseY = baseY;
-    
-    for (int i = 0; i < items.size(); i++) {
-        String[] item = items.get(i);
-        String type = item[0];
-        int size = Integer.parseInt(item[1]);
-        int number = (size + 1) / 2;
+     * name: drawHeightRuler
+     * use nothing
+     * Dibuja una regla en el costado para medir la altura
+     * returns nothing
+     */
+    private void drawHeightRuler() {
+        if (!isVisible) return;
         
-        if (type.equals("cup")) {
-            // Las tazas se apilan: cada nueva taza se apoya en el borde de la anterior
-            if (i == 0 || !items.get(i-1)[0].equals("cup")) {
-                // Primera taza o después de una tapa
-                yPositions[i] = currentBaseY - (size * 30);
-                currentBaseY = yPositions[i] + (size * 30); // Nueva base para el siguiente
-                System.out.println("Taza #" + number + " (nueva base): Y=" + yPositions[i]);
-            } else {
-                // Taza después de otra taza
-                int prevSize = Integer.parseInt(items.get(i-1)[1]);
-                
-                if (size < prevSize) {
-                    // Taza MÁS PEQUEÑA: se ANIDA dentro de la anterior
-                    // Se coloca DENTRO, con su base en la base de la taza grande
-                    int prevY = yPositions[i-1];
-                    int prevBottomY = prevY + (prevSize * 30);
-                    yPositions[i] = prevBottomY - (size * 30);
-                    System.out.println("  Taza #" + number + " ANIDADA dentro de #" + 
-                                     ((prevSize+1)/2) + " en Y=" + yPositions[i]);
-                } else {
-                    // Taza MÁS GRANDE: se apoya en el borde
-                    yPositions[i] = yPositions[i-1] - ((size - prevSize) * 30);
-                    System.out.println("  Taza #" + number + " APOYADA en Y=" + yPositions[i]);
-                }
-                currentBaseY = yPositions[i] + (size * 30);
-            }
-        }
-    }
-    
-    // Calcular posiciones de tapas (dependen de las tazas)
-    for (int i = 0; i < items.size(); i++) {
-        String[] item = items.get(i);
-        String type = item[0];
-        int size = Integer.parseInt(item[1]);
-        int number = (size + 1) / 2;
+        Canvas canvas = Canvas.getCanvas(this.width, this.maxHeight);
         
-        if (type.equals("lid")) {
-            // Buscar si hay una taza del MISMO tamaño
-            boolean foundMatch = false;
-            for (int j = 0; j < items.size(); j++) {
-                String[] other = items.get(j);
-                if (other[0].equals("cup") && Integer.parseInt(other[1]) == size) {
-                    // Tapa sobre su taza
-                    yPositions[i] = yPositions[j] - 30;
-                    System.out.println("  Tapa #" + number + " SOBRE taza #" + number + 
-                                     " en Y=" + yPositions[i]);
-                    foundMatch = true;
-                    break;
-                }
-            }
+        // Dibujar línea vertical principal
+        Rectangle verticalLine = new Rectangle();
+        verticalLine.changeColor("black");
+        verticalLine.changeSize(maxHeight - 20, 2); // Alto, ancho
+        verticalLine.setPosition(30, 10); // Posición X, Y
+        verticalLine.makeVisible();
+        
+        // Dibujar marcas cada 1 cm (30 píxeles)
+        for (int cm = 0; cm <= maxHeight; cm++) {
+            int y = maxHeight - (cm * 30) - 10; // -10 por margen inferior
             
-            if (!foundMatch) {
-                // Buscar la taza más grande donde anidar esta tapa
-                int largestCupIndex = -1;
-                int largestCupSize = 0;
+            // Marca más larga cada 5 cm
+            int markWidth = (cm % 5 == 0) ? 15 : 8;
+            
+            Rectangle mark = new Rectangle();
+            mark.changeColor("black");
+            mark.changeSize(2, markWidth); // Alto 2px, ancho variable
+            mark.setPosition(35 - markWidth, y);
+            mark.makeVisible();
+        }
+        
+        System.out.println("Regla de altura dibujada");
+    }
+    
+    /**
+     * name: ok
+     * use: nothing
+     * Checks if last operation was Successful
+     * return boolean value for last operation
+     */
+    public boolean ok(){
+        return lastOperationSuccessful;
+    }
+    //EXIT SIMULATOR
+    /**
+     * name: exit
+     * use: nothing
+     * Ask users if they want to exit the simulator
+     * return nothing
+     */
+    public void exit() {
+        int confirm = JOptionPane.showConfirmDialog(null, 
+            "¿Estás seguro de que quieres salir?", 
+            "Confirmar salida", 
+            JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == JOptionPane.YES_OPTION) {
+            System.exit(0);
+        }
+    }
+    
+    /**
+     * Ciclo 2
+     */
+    
+    /**
+     * name: Tower
+     * use: int cups (n cups for problem)
+     * Constructor for Tower with n cups and Fixed size (500,1000)
+     * return: nothing
+     */
+    public Tower(int cups){
+        this(500,1000);
+        for(int i = 1; i<=cups; i++){
+            pushCup(i);
+        }
+        this.lastOperationSuccessful = true;
+        
+    }
+    
+    /**
+     * name: Swap
+     * use: String[] o1 (first object to swap); String[] o2 (second object to swap)
+     * Swap two objects places in item list 
+     * return: nothing
+     */
+    public void swap(String[] o1, String[] o2){
+        int idx1 = 0;
+        int idx2 = 0;
+        int idx = -1;
+        //Check if o1 exist on item list
+        idx = checkIdxObjectForSwap(o1);
+        if(idx == -1){
+            this.lastOperationSuccessful = false;
+            return;
+        }else{idx1 = idx;}
+
+        //Check if o2 exist on item list
+        idx = checkIdxObjectForSwap(o2);
+        if(idx == -1){
+            this.lastOperationSuccessful = false;
+            return;
+        }else{idx2 = idx;}
+
+        //Do swap
+        Collections.swap(items, idx1, idx2);
+        return;
+    }
+    /**
+     * name: checkIdxObjectForSwap
+     * use: String[] o: object type and number {"type", "number"} format
+     * Aux method to look in item's list for a specific object and returns the idx, if it's not found return -1
+     * return: index for searched object
+     */
+    private int checkIdxObjectForSwap(String[] o){
+        if(o[0].equals("cup")){
+            int id = getCupByIdx(Integer.parseInt(o[1]));
+            if(id != -1){
+                return id;
+            }
+        }else{
+            int id = getCupByIdx(Integer.parseInt(o[1]));
+            if(id != -1){
+                return id;
+            }
+        }
+        return -1;
+    }
+    
+    /**
+     * name: getCupByIdx
+     * use: int number (number for the cup we're looking for)
+     * Checks in item list for a specific cup by number 
+     * return: index for cup
+     */
+    private int getCupByIdx(int number){
+        for (int i = 0; i<items.size(); i++){
+            if(items.get(i) instanceof Cup && items.get(i).getNumber() == number){return i;}
+            }
+        return -1;
+        }
+    
+    /**
+     * name: getLidByIdx
+     * use: int number (number for the cup we're looking for)
+     * Checks in item list for a specific lid by number 
+     * return: index for lid
+     */
+    private int getLidByIdx(int number){
+        for (int i = 0; i<items.size(); i++){
+            if(items.get(i) instanceof Lid && items.get(i).getNumber() == number){
+                return i;
+            } 
+        }
+        return -1;
+    }
+    
+    /**
+     * name: cover
+     * use: nothing
+     * Joins cup and lid by number, if lid doesn't exist, looks for the next cup
+     * return: nothing
+     */
+    public void cover() {
+        if (items.isEmpty()) {
+            this.lastOperationSuccessful = false;
+            return;
+        }
+        
+        boolean operationSuccess = false;
+        
+        for (int i = 0; i < items.size(); i++) {
+            if (items.get(i) instanceof Cup) {
+                Cup currentCup = (Cup) items.get(i);
                 
-                for (int j = 0; j < items.size(); j++) {
-                    String[] other = items.get(j);
-                    if (other[0].equals("cup")) {
-                        int cupSize = Integer.parseInt(other[1]);
-                        if (cupSize > size && cupSize > largestCupSize) {
-                            largestCupSize = cupSize;
-                            largestCupIndex = j;
+                // Buscar cualquier tapa después de esta copa
+                for (int j = i + 1; j < items.size(); j++) {
+                    if (items.get(j) instanceof Lid) {
+                        Lid lid = (Lid) items.get(j);
+                        
+                        // Verificar si la tapa puede cubrir esta copa
+                        // (asumiendo que una tapa debe ser del mismo tamaño o mayor)
+                        if (lid.getSize() >= currentCup.getSize()) {
+                            // Mover la tapa justo después de la copa
+                            if (j != i + 1) {  // Solo si no está ya en la posición correcta
+                                Collections.swap(items, i + 1, j);
+                            }
+                            operationSuccess = true;
+                            break;
                         }
                     }
                 }
                 
-                if (largestCupIndex != -1) {
-                    // Anidar la tapa dentro de la taza más grande
-                    // La colocamos a una altura que se vea dentro
-                    int cupY = yPositions[largestCupIndex];
-                    int cupBottomY = cupY + (largestCupSize * 30);
-                    yPositions[i] = cupY + (largestCupSize * 30) / 2 - 15;
-                    System.out.println("  Tapa #" + number + " ANIDADA en taza #" + 
-                                     ((largestCupSize+1)/2) + " en Y=" + yPositions[i]);
-                } else {
-                    // No hay taza, va en la base
-                    yPositions[i] = baseY - 30;
-                    System.out.println("  Tapa #" + number + " en BASE en Y=" + yPositions[i]);
+                if (operationSuccess) {
+                    break;  // Solo una operación por llamada
                 }
             }
         }
+        
+        this.lastOperationSuccessful = operationSuccess;
     }
-    
-    return yPositions;
-}
-    /**
- * name: makeVisible
- * use nothing
- * Hace visible el simulador. Si la torre no cabe, muestra mensaje de error
- * returns nothing
- */
-public void makeVisible() {
-    // Calcular altura actual de la torre
-    int towerHeight = height();
-    // Verificar si cabe en el canvas
-    if (towerHeight <= maxHeight) {
-        isVisible = true;
-        lastOperationSuccessful = true;
-        
-        // Redibujar todo
-        redrawAll();
-        
-        // Mostrar mensaje de confirmación (solo si hay elementos)
-        if (!items.isEmpty()) {
-            JOptionPane.showMessageDialog(null, 
-                "✅ Torre visible\n" +
-                "Altura: " + towerHeight + " cm\n" +
-                "Elementos: " + items.size() + "\n" +
-                "Tazas: " + cups.size() + ", Tapas: " + lids.size(),
-                "Simulador",
-                JOptionPane.INFORMATION_MESSAGE);
-        }
-        
-        System.out.println("makeVisible: Torre visible - Altura " + towerHeight + "cm");
-        
-    } else {
-        // No cabe: no se hace visible
-        isVisible = false;
-        lastOperationSuccessful = false;
-        
-        // Mensaje de error detallado
-        String mensaje = String.format(
-            "❌ LA TORRE NO CABE EN LA PANTALLA\n\n" +
-            "Altura de la torre: %d cm\n" +
-            "Altura máxima: %d cm\n" +
-            "Exceso: %d cm\n\n" +
-            "Sugerencias:\n" +
-            "• Reduzca el número de elementos\n" +
-            "• Cambie el orden (los más grandes abajo)\n" +
-            "• Use reverseTower() para invertir el orden",
-            towerHeight, maxHeight, (towerHeight - maxHeight));
-        
-        JOptionPane.showMessageDialog(null, 
-            mensaje,
-            "Error de visualización",
-            JOptionPane.ERROR_MESSAGE);
-        
-        System.out.println("makeVisible: Torre NO cabe - " + towerHeight + 
-                           "cm > " + maxHeight + "cm");
-    }
-}
-
-/**
- * name: makeInvisible
- * use nothing
- * Hace invisible el simulador y oculta todos los elementos
- * returns nothing
- */
-public void makeInvisible() {
-    if (isVisible) {
-        // Ocultar todos los elementos gráficos
-        for (Cup cup : cupInstances) {
-            cup.makeInvisible();
-        }
-        for (Lid lid : lidInstances) {
-            lid.makeInvisible();
-        }
-        
-        // Limpiar el canvas
-        Canvas canvas = Canvas.getCanvas(this.width, this.maxHeight);
-        canvas.erase(this);
-        
-        // Actualizar estado
-        isVisible = false;
-        lastOperationSuccessful = true;
-        
-        // Mensaje de confirmación
-        JOptionPane.showMessageDialog(null, 
-            "🔍 Simulador ocultado\n" +
-            "Los datos de la torre se mantienen",
-            "Simulador",
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        System.out.println("makeInvisible: Simulador ocultado");
-        
-    } else {
-        // Ya estaba invisible
-        lastOperationSuccessful = false;
-        
-        JOptionPane.showMessageDialog(null, 
-            "El simulador ya está invisible",
-            "Información",
-            JOptionPane.INFORMATION_MESSAGE);
-    }
-}
-
-    /**
- * name: drawHeightRuler
- * use nothing
- * Dibuja una regla en el costado para medir la altura
- * returns nothing
- */
-private void drawHeightRuler() {
-    if (!isVisible) return;
-    
-    Canvas canvas = Canvas.getCanvas(this.width, this.maxHeight);
-    
-    // Dibujar línea vertical principal
-    Rectangle verticalLine = new Rectangle();
-    verticalLine.changeColor("black");
-    verticalLine.changeSize(maxHeight - 20, 2); // Alto, ancho
-    verticalLine.setPosition(30, 10); // Posición X, Y
-    verticalLine.makeVisible();
-    
-    // Dibujar marcas cada 1 cm (30 píxeles)
-    for (int cm = 0; cm <= maxHeight; cm++) {
-        int y = maxHeight - (cm * 30) - 10; // -10 por margen inferior
-        
-        // Marca más larga cada 5 cm
-        int markWidth = (cm % 5 == 0) ? 15 : 8;
-        
-        Rectangle mark = new Rectangle();
-        mark.changeColor("black");
-        mark.changeSize(2, markWidth); // Alto 2px, ancho variable
-        mark.setPosition(35 - markWidth, y);
-        mark.makeVisible();
-    }
-    
-    System.out.println("Regla de altura dibujada");
-}
     
     /**
- * name: getColorForNumber
- * use int: number (número de taza/tapa)
- * returns String: color correspondiente al número
- * Los colores están asignados para que taza y tapa del mismo número tengan el MISMO color
- */
-private String getColorForNumber(int number) {
-    switch(number) {
-        case 1: return "red";
-        case 2: return "blue";
-        case 3: return "green";
-        case 4: return "yellow";
-        case 5: return "magenta";
-        case 6: return "orange";
-        case 7: return "cyan";
-        case 8: return "pink";
-        case 9: return "gray";
-        default: return "black";
-    }
-}
-
-/**
- * name: findCupByNumber
- * use int: number (número de taza a buscar)
- * returns Cup: la instancia de Cup con ese número, o null si no existe
- */
-private Cup findCupByNumber(int number) {
-    for (Cup cup : cupInstances) {
-        if (cup.getNumber() == number) {
-            return cup;
-        }
-    }
-    return null;
-}
-
-/**
- * name: findLidByNumber
- * use int: number (número de tapa a buscar)
- * returns Lid: la instancia de Lid con ese número, o null si no existe
- */
-private Lid findLidByNumber(int number){
-    for (Lid lid : lidInstances) {
-        if (lid.getNumber() == number) {
-            return lid;
-        }
-    }
-    return null;
-}
-
-    //EXIT SIMULATOR
-    /**
-     * Salimos del simulador 
+     * name: swapToReduce
+     * use: nothing
+     * Looks in items list, Cups to swap place and reduce the height
+     * returns: swap instructions to reduce the tower height
      */
-    public void exit() {
-    int confirm = JOptionPane.showConfirmDialog(null, 
-        "¿Estás seguro de que quieres salir?", 
-        "Confirmar salida", 
-        JOptionPane.YES_NO_OPTION);
-    
-    if (confirm == JOptionPane.YES_OPTION) {
-        System.exit(0);
-    }
-}
-
-/**
- * name: Tower
- * use int: cups (amount of cups)
- */
-public Tower(int cups) {
-    this(500, 500);
-        for (int i = 1; i <= cups; i++) {
-        pushCup(i);
-    }
-}
-
-/**
- * Intercambia la posición de dos objetos de la torre 
- * name: swap
- */
-public void swap(String[] o1, String[] o2) {
-    int index1 = -1;
-    int index2 = -1;
-
-    // Buscamos los índices en la lista que representa la estructura de la torre
-    for (int i = 0; i < items.size(); i++) {
-        String[] current = items.get(i);
-    if (current[0].trim().equalsIgnoreCase(o1[0].trim()) && current[1].trim().equals(o1[1].trim())) {
-        index1 = i;
-    }
-    if (current[0].trim().equalsIgnoreCase(o2[0].trim()) && current[1].trim().equals(o2[1].trim())) {
-        index2 = i;
-    }   }
-
-    if (index1 != -1 && index2 != -1) {
-        java.util.Collections.swap(items, index1, index2);
-        this.lastOperationSuccessful = true;
-        if(isVisible){
-        redrawAll();}
-    } else {
-        this.lastOperationSuccessful = false;
-        if (isVisible) {
-        String msg = "No existe: " + o1[0] + " " + o1[1] + " o " + o2[0] + " " + o2[1];
-                JOptionPane.showMessageDialog(null, msg);
+    public String[][] swapToReduce() {
+        List<String[]> swapPairs = new ArrayList<>();
+        
+        for (int i = 0; i < items.size() - 1; i++) {
+            if (!(items.get(i) instanceof Cup)) continue;
+            
+            Cup cupI = (Cup) items.get(i);
+            
+            for (int j = i + 1; j < items.size(); j++) {
+                if (!(items.get(j) instanceof Cup)) continue;
+                
+                Cup cupJ = (Cup) items.get(j);
+                
+                // Si encontramos una copa más grande después de una más pequeña
+                if (cupI.getNumber() < cupJ.getNumber()) {
+                    // Par para la copa pequeña
+                    String[] firstCup = new String[2];
+                    firstCup[0] = "cup";
+                    firstCup[1] = String.valueOf(cupI.getNumber());
+                    
+                    // Par para la copa grande
+                    String[] secondCup = new String[2];
+                    secondCup[0] = "cup";
+                    secondCup[1] = String.valueOf(cupJ.getNumber());
+                    
+                    // Añadir ambos pares a la lista
+                    swapPairs.add(firstCup);
+                    swapPairs.add(secondCup);
+                    break;  // Solo el primer candidato para cada i
+                }
+            }
         }
+        
+        // Convertir List<String[]> a String[][]
+        return swapPairs.toArray(new String[0][2]);
     }
-}
+    
+    
+    // printAllLists Console:
+    public void printAllLists(){
+        System.out.println("Lista: Items");
+        for(int i = 0; i<items.size(); i++){
+            if(items.get(i) instanceof Cup){
+                System.out.println("Taza; idx: "+i+ " number: "+items.get(i).getNumber() + " color: " + items.get(i).getColor());
+            }
+            else if(items.get(i) instanceof Lid){
+                System.out.println("Tapa; idx: "+i+ " number: "+items.get(i).getNumber() + " color: " + items.get(i).getColor());
+            }
+        }
 
-/**
- * Debe permitir tapar las tazas que tienen sus tapas en la torre 
- * 
- */
-public void cover() {
-    if(!items.isEmpty()){
-    String[] top = items.get(items.size() - 1); // Obtenemos el objeto que este en la cima de la torre.
-    if(top[0].equalsIgnoreCase("cup")){
-     int size = Integer.parseInt(top[1]);
-     pushLid(size);
-     this.lastOperationSuccessful = true;
-    }else{lastOperationSuccessful = true;}
     }
-    else{
-        this.lastOperationSuccessful=false;
+    
+    /**
+     * name: getItems
+     * use: nothing
+     * Returns the item list (getter method)
+     * return Item list
+     */
+    public List<Item> getItems(){
+        return items;
     }
-}
-/**
- * retorna el valor de la última operacion
- */
-public boolean ok() {
-    return this.lastOperationSuccessful;
-}
 }

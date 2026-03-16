@@ -1,5 +1,4 @@
-
-
+import java.util.*;
 import static org.junit.Assert.*;
 import org.junit.After;
 import org.junit.Before;
@@ -32,28 +31,35 @@ public class TowerC2Test
     
     @Test
     public void accordingGRShouldCreateACup(){
-        String[] expectedItems = {"cup", "2"};
+        List<Item> expectedItems = new ArrayList<>();
+        Cup newCup = new Cup(2);
+        expectedItems.add(newCup);
         Tower tower = new Tower(500,1000);
         tower.pushCup(2);
-        assertEquals("Se obtuvo el valor esperado en la lista items",expectedItems,tower.items.get(0));
+        assertTrue("Se obtuvo el valor esperado en la lista items",expectedItems.equals(tower.getItems()));
+        
+        
     }
     
     @Test
     public void accordingGRShouldCreateALid(){
-        String[] expectedItems = {"lid", "3"};
-        Tower tower = new Tower(500, 1000);
-        tower.pushLid(3);
-        assertEquals("Se obtuvo el valor esperado en la lista items",expectedItems,tower.items.get(0));
+        List<Item> expectedItems = new ArrayList<>();
+        Lid newLid = new Lid(2);
+        expectedItems.add(newLid);
+        Tower tower = new Tower(500,1000);
+        tower.pushLid(2);
+        assertTrue("Se obtuvo el valor esperado en la lista items", expectedItems.equals(tower.getItems()));
     }
     
     @Test
     public void accordingGRShouldCreateICups(){
-        String[][] expectedItems = {{"cup", "1"},{"cup", "2"},{"cup", "3"}};
-        Tower tower = new Tower(3);
-        for(int i = 0; i<3; i++){
-            assertArrayEquals("Se obtuvo el valor esperado en la lista items", expectedItems[i], tower.items.get(i));
+        List<Item> expectedItems = new ArrayList<>();
+        Tower tower = new Tower(5);
+        for(int i = 1 ; i<=5 ; i++){
+            Cup newCup = new Cup(i);
+            expectedItems.add(newCup);
         }
-        
+        assertTrue("Se obtuvo el valor esperado en la lista items", expectedItems.equals(tower.getItems()));
     }
     /**
      * Tears down the test fixture.

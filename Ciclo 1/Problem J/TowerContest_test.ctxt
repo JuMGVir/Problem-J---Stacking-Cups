@@ -1,0 +1,19 @@
+#BlueJ class context
+comment0.target=TowerContest_test
+comment1.params=
+comment1.target=void\ setUp()
+comment2.params=
+comment2.target=void\ shouldSolveIntermediateCase()
+comment3.params=
+comment3.target=void\ shouldSolveMinimumHeight()
+comment4.params=
+comment4.target=void\ shouldReturnNullForTooLowHeight()
+comment5.params=
+comment5.target=void\ shouldSolveMaximumHeight()
+comment6.params=
+comment6.target=void\ shouldReturnNullForTooHighHeight()
+comment7.params=
+comment7.target=void\ shouldSolve()
+comment8.params=
+comment8.target=void\ tearDown()
+numComments=9
